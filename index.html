@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Симулятор программиста</title>
+<style>
+  body {
+    font-family: 'Fira Code', monospace;
+    background: linear-gradient(135deg, #0f111b 0%, #1a1e2e 100%);
+    color: #f0f0f0;
+    margin: 0;
+    padding: 0;
+    display: block;
+    height: auto;
+    min-height: 98vh;
+    justify-content: center;
+    line-height: 1.6;
+  }
+
+  #app {
+    min-width: 600px;
+    max-width: 800px;
+    height: auto;
+    min-height: unset;
+    margin: 20px auto;
+    background: rgba(28, 31, 51, 0.95);
+    border-radius: 16px;
+    padding: 30px;
+    box-shadow: 0 8px 32px rgba(17, 119, 255, 0.2);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(85, 170, 255, 0.1);
+  }
+
+  h1, h2, h3 {
+    text-align: center;
+    color: #6ad4ff;
+    margin: 0 0 25px;
+    text-shadow: 0 2px 4px rgba(106, 212, 255, 0.3);
+  }
+
+  textarea {
+    resize: vertical;
+    width: 100%;
+    max-width: 100%;
+    min-width: 100%;
+  }
+
+  input, select, textarea, button {
+    box-sizing: border-box;
+    width: calc(100% - 2px);
+    margin: 0 0 15px;
+    border-radius: 8px;
+    background: rgba(34, 39, 60, 0.8);
+    border: 1px solid rgba(85, 170, 255, 0.2);
+    padding: 12px;
+    font-family: 'Fira Code', monospace;
+    font-size: 15px;
+    color: #e3e3ff;
+    transition: all 0.3s ease;
+  }
+
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: #6ad4ff;
+    box-shadow: 0 0 8px rgba(106, 212, 255, 0.3);
+  }
+
+  button {
+    background: linear-gradient(135deg, #6ad4ff 0%, #2288ff 100%);
+    border: none;
+    padding: 12px 20px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+    width: calc(100% - 2px);
+    margin: 0 0 15px;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+  }
+
+  .input-group {
+    display: flex;
+    gap: 10px;
+  }
+
+  .input-group input,
+  .input-group button {
+    width: auto;
+    flex: 1;
+  }
+
+   button::after {
+    content: '';
+    position: absolute;
+    left: -1px;
+    right: -1px;
+    top: -1px;
+    bottom: -1px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+  }
+
+  button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(34, 136, 255, 0.4);
+  }
+
+  #messages {
+    font-weight: bold;
+    margin-bottom: 20px;
+    text-align: center;
+    transition: all 0.3s ease;
+    padding: 15px;
+    border-radius: 8px;
+    display: none;
+  }
+
+  #messages:not(:empty) {
+    display: block;
+    background: rgba(34, 39, 60, 0.6);
+    border: 1px solid rgba(106, 212, 255, 0.2);
+  }
+
+  .modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    margin-top: 150px;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    animation: fadeIn 0.3s ease;
+  }
+
+  .modal-content {
+    max-height: 90vh;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: linear-gradient(145deg, #1c1f33 0%, #22273c 100%);
+    border-radius: 12px;
+    padding: 25px;
+    max-width: 90%;
+    width: 600px;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    transform: translateY(-20px);
+    animation: slideIn 0.3s ease forwards;
+    border: 1px solid rgba(106, 212, 255, 0.3);
+  }
+
+  .modal-header {
+    padding: 15px 25px;
+    background: rgba(28, 31, 51, 0.9);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    border-bottom: 1px solid rgba(106, 212, 255, 0.2);
+  }
+
+  .modal-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 25px;
+  }
+
+  @media (max-height: 600px) {
+    .modal-content {
+      max-height: 85vh;
+    }
+    
+    .modal-body {
+      padding: 15px 20px;
+    }
+  }
+
+  .modal-body {
+    scroll-behavior: smooth;
+  }
+
+  .modal-body::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .modal-body::-webkit-scrollbar-track {
+    background: rgba(28, 31, 51, 0.3);
+  }
+
+  .modal-body::-webkit-scrollbar-thumb {
+    background: #6ad4ff;
+    border-radius: 4px;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes slideIn {
+    from { transform: translateY(-20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  .close {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    cursor: pointer;
+    font-size: 24px;
+    color: #6ad4ff;
+    transition: all 0.3s ease;
+  }
+
+  .close:hover {
+    color: #fff;
+    transform: scale(1.2);
+  }
+
+  body.modal-open {
+    overflow: hidden;
+  }
+
+  .modal-content {
+    background: linear-gradient(145deg, #1c1f33 0%, #22273c 100%);
+    border: 1px solid rgba(106, 212, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  }
+
+  .achievement-card {
+    background: linear-gradient(145deg, rgba(34, 39, 60, 0.8) 0%, rgba(28, 31, 51, 0.8) 100%);
+    border-radius: 12px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .achievement-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 3px;
+    height: 100%;
+    background: #6ad4ff;
+  }
+
+  .achievement-card.unlocked {
+    border: 1px solid #6ad4ff;
+    box-shadow: 0 0 15px rgba(106, 212, 255, 0.2);
+  }
+
+  .achievement-item {
+    padding: 15px;
+    margin: 10px 0;
+    background: rgba(34, 39, 60, 0.6);
+    border-left: 4px solid #6ad4ff;
+    border-radius: 6px;
+    position: relative;
+    transition: all 0.3s ease;
+  }
+
+  .achievement-item:hover {
+    transform: translateX(5px);
+  }
+
+  .achievement-item.unlocked {
+    background: linear-gradient(90deg, rgba(106, 212, 255, 0.1) 0%, transparent 100%);
+  }
+
+  #player-dashboard, #admin-dashboard {
+    position: relative;
+    padding: 20px;
+    background: rgba(28, 31, 51, 0.6);
+    border-radius: 12px;
+    margin-top: 20px;
+    border: 1px solid rgba(106, 212, 255, 0.1);
+  }
+
+  #player-stats p {
+    background: rgba(34, 39, 60, 0.6);
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid rgba(106, 212, 255, 0.2);
+  }
+
+   .hidden {
+    display: none !important;
+  }
+
+  #task-area {
+    background: rgba(34, 39, 60, 0.6);
+    padding: 20px;
+    border-radius: 12px;
+    margin-top: 20px;
+    border: 1px solid rgba(106, 212, 255, 0.2);
+  }
+
+  pre {
+    background: #0f111b;
+    padding: 15px;
+    border-radius: 8px;
+    white-space: pre-wrap;
+    border: 1px solid rgba(106, 212, 255, 0.2);
+  }
+
+  section[data-admin-section] {
+    display: flex;
+    flex-direction: column;
+    height: 70vh;
+    margin-top: 20px;
+    background: rgba(34, 39, 60, 0.3);
+    border-radius: 8px;
+    border: 1px solid rgba(106, 212, 255, 0.1);
+    overflow: hidden;
+  }
+
+  section[data-admin-section] > h3 {
+    padding: 15px 20px;
+    margin: 0;
+    background: rgba(28, 31, 51, 0.5);
+    border-bottom: 1px solid rgba(106, 212, 255, 0.1);
+  }
+
+  .tasks-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 15px;
+  }
+
+  #admin-tasks-list {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 10px;
+    margin-top: 10px;
+  }
+
+  #admin-tasks-list::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  #admin-tasks-list::-webkit-scrollbar-track {
+    background: rgba(28, 31, 51, 0.3);
+    border-radius: 4px;
+  }
+
+  #admin-tasks-list::-webkit-scrollbar-thumb {
+    background: #6ad4ff;
+    border-radius: 4px;
+  }
+
+  #btn-add-task {
+    align-self: flex-start;
+    margin-bottom: 15px;
+  }
+
+  #admin-task-form {
+    padding-top: 10px;
+  }
+
+  @media (max-width: 480px) {
+    #app {
+      margin: 10px;
+      padding: 20px;
+    }
+    
+    button {
+      padding: 10px 15px;
+    }
+  }
+</style>
+</head>
+<body>
+  <div id="app">
+    <h1>Симулятор программиста</h1>
+    <div id="messages"></div>
+
+    <div id="auth-section">
+      <form id="login-form">
+        <input id="login-username" type="text" placeholder="Имя пользователя" required />
+        <input id="login-password" type="password" placeholder="Пароль" required />
+        <button type="submit">Войти</button>
+      </form>
+
+      <form id="register-form">
+        <input id="register-username" type="text" placeholder="Имя пользователя" required />
+        <input id="register-password" type="password" placeholder="Пароль" required />
+        <select id="register-role">
+          <option value="player">Игрок</option>
+          <option value="admin">Админ</option>
+        </select>
+        <button type="submit">Зарегистрироваться</button>
+      </form>
+    </div>
+
+    <div id="player-dashboard" class="hidden">
+      <button id="player-logout">Выйти</button>
+      <h2>Привет, <span id="player-name"></span></h2>
+      <p>Уровень: <span id="player-level"></span> | Монеты: <span id="player-coins"></span></p>
+      <!-- В секции player-dashboard -->
+      <button id="btn-show-achievements" onclick="showAllAchievements()">
+        Все достижения
+      </button>
+      <div id="player-stats">
+        <p>Решено задач: <span id="solved-count">0</span></p>
+        <button onclick="showSolvedTasks()">Показать историю</button>
+      </div>
+
+      <div id="solved-tasks-modal" class="modal hidden">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3>Решенные задачи</h3>
+            <span class="close" onclick="closeModal()">&times;</span>
+          </div>
+          <div class="modal-body">
+            <!-- Контент с возможностью скролла -->
+            <div id="solved-tasks-list"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="achievements-modal" class="modal hidden">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3>Все достижения</h3>
+            <span class="close" onclick="closeAchievementsModal()">&times;</span>
+          </div>
+          <div class="modal-body">
+            <!-- Контент с возможностью скролла -->
+            <div class="achievements-list" id="all-achievements-list"></div>
+          </div>
+        </div>
+      </div>
+
+      <select id="player-task-difficulty">
+        <option value="easy">Легкий</option>
+        <option value="medium">Средний</option>
+        <option value="hard">Сложный</option>
+      </select>
+      <button id="btn-get-task">Получить задачу</button>
+
+      <div id="task-area" class="hidden">
+        <h3>Задача:</h3>
+        <pre id="task-desc"></pre>
+        <textarea id="task-solution-input-answer" rows="4" placeholder="Введите ответ"></textarea>
+        <button id="btn-submit-solution">Решить</button>
+        <button id="btn-cancel-task">Отмена</button>
+      </div>
+    </div>
+
+    <div id="admin-dashboard" class="hidden">
+      <button id="admin-logout">Выйти</button>
+      <h2>Админ панель, <span id="admin-name"></span></h2>
+
+      <section>
+        <h3>Пользователи</h3>
+        <div id="admin-users-list"></div>
+      </section>
+
+      <section data-admin-section>
+        <h3>Задачи</h3>
+        <div class="tasks-container">
+          <button id="btn-add-task">Добавить задачу</button>
+          <div id="admin-tasks-list"></div>
+        </div>
+      </section>
+
+      <div id="admin-task-form" class="hidden">
+        <h3>Добавить / Редактировать задачу</h3>
+        <input type="hidden" id="task-id" />
+        <textarea id="task-desc-input" rows="4" placeholder="Описание"></textarea>
+        <textarea id="task-solution-input" rows="4" placeholder="Решение"></textarea>
+        <select id="task-difficulty-input">
+          <option value="easy">Легкий</option>
+          <option value="medium">Средний</option>
+          <option value="hard">Сложный</option>
+        </select>
+        <button id="btn-save-task">Сохранить</button>
+        <button id="btn-cancel-task-form">Отмена</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+
+let currentSolvedTasks = [];
+let allAchievements = [];
+let userAchievements = [];
+let taskStartTime = null;
+let attemptCount = 0;
+
+function showMessage(msg, isError = false) {
+  const messages = document.getElementById('messages');
+  messages.textContent = msg;
+  messages.className = isError ? 'error' : 'success';
+  setTimeout(() => { messages.textContent = ''; }, 5000);
+}
+
+const API_BASE = 'http://localhost/programm_simulator_api'; 
+
+async function apiPost(endpoint, data) {
+  try {
+    const response = await fetch(`${API_BASE}/${endpoint}`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(data),
+      credentials: 'include'
+    });
+
+    const text = await response.text();
+    
+    try {
+      return JSON.parse(text);
+    } catch {
+      throw new Error(`Invalid JSON: ${text.slice(0, 100)}`);
+    }
+    
+  } catch (e) {
+    return {
+      error: e.name === 'TypeError' ? 'Network Error' : e.message,
+      responseText: e.response?.text()
+    };
+  }
+}
+
+async function apiGet(endpoint) {
+  try {
+    const res = await fetch(API_BASE + '/' + endpoint, {
+      method: 'GET',
+      credentials: 'include',
+    });
+
+    const text = await res.text();
+    try {
+      return JSON.parse(text);
+    } catch (e) {
+      console.error('Invalid JSON response:', text);
+      return { error: `Server error: ${text.substring(0, 100)}` };
+    }
+  } catch (e) {
+    console.error('Network error:', e);
+    return { error: 'Network connection failed' };
+  }
+}
+
+let currentUser = null;
+let currentTask = null;
+
+// Elements shorthand
+const authSection = document.getElementById('auth-section');
+const playerDashboard = document.getElementById('player-dashboard');
+const adminDashboard = document.getElementById('admin-dashboard');
+const loginForm = document.getElementById('login-form');
+const registerForm = document.getElementById('register-form');
+const playerNameSpan = document.getElementById('player-name');
+const playerLevelSpan = document.getElementById('player-level');
+const playerCoinsSpan = document.getElementById('player-coins');
+const playerTaskDifficulty = document.getElementById('player-task-difficulty');
+const btnGetTask = document.getElementById('btn-get-task');
+const taskArea = document.getElementById('task-area');
+const taskDesc = document.getElementById('task-desc');
+const taskSolutionInput = document.getElementById('task-solution-input-answer');
+const btnSubmitSolution = document.getElementById('btn-submit-solution');
+const btnCancelTask = document.getElementById('btn-cancel-task');
+const playerLogoutBtn = document.getElementById('player-logout');
+const adminLogoutBtn = document.getElementById('admin-logout');
+const adminNameSpan = document.getElementById('admin-name');
+const adminUsersList = document.getElementById('admin-users-list');
+const adminTasksList = document.getElementById('admin-tasks-list');
+const btnAddTask = document.getElementById('btn-add-task');
+const adminTaskForm = document.getElementById('admin-task-form');
+const taskIdInput = document.getElementById('task-id');
+const taskDescInput = document.getElementById('task-desc-input');
+const taskSolInput = document.getElementById('task-solution-input');
+const taskDifficultyInput = document.getElementById('task-difficulty-input');
+const btnSaveTask = document.getElementById('btn-save-task');
+const btnCancelTaskForm = document.getElementById('btn-cancel-task-form');
+
+function showSection(role) {
+  authSection.classList.add('hidden');
+  playerDashboard.classList.add('hidden');
+  adminDashboard.classList.add('hidden');
+  taskArea.classList.add('hidden');
+  adminTaskForm.classList.add('hidden');
+  if (!role) {
+    authSection.classList.remove('hidden');
+  } else if (role === 'player') {
+    playerDashboard.classList.remove('hidden');
+  } else if (role === 'admin') {
+    adminDashboard.classList.remove('hidden');
+  }
+}
+
+// Login
+loginForm.onsubmit = async (e) => {
+  e.preventDefault();
+  const username = document.getElementById('login-username').value.trim();
+  const password = document.getElementById('login-password').value;
+  if (!username || !password) {
+    showMessage('Пожалуйста заполните все поля', true);
+    return;
+  }
+  const result = await apiPost('login.php', {username, password});
+  if (result.error) {
+    showMessage(result.error, true);
+    return;
+  }
+  currentUser = result.user;
+  if (currentUser.role === 'admin') {
+    showSection('admin');
+    loadAdminData();
+  } else {
+    showSection('player');
+    updatePlayerDashboard();
+  }
+  showMessage('Вход успешен');
+};
+
+// Register
+registerForm.onsubmit = async (e) => {
+  e.preventDefault();
+  const username = document.getElementById('register-username').value.trim();
+  const password = document.getElementById('register-password').value;
+  const role = document.getElementById('register-role').value;
+  if (!username || !password) {
+    showMessage('Пожалуйста заполните все поля', true);
+    return;
+  }
+  const result = await apiPost('register.php', {username, password, role});
+  if (result.error) {
+    showMessage(result.error, true);
+    return;
+  }
+  showMessage('Регистрация успешна, теперь войдите!');
+  registerForm.reset();
+};
+
+// Logout
+playerLogoutBtn.onclick = async () => {
+  await apiGet('logout.php');
+  currentUser = null;
+  showSection(null);
+};
+
+adminLogoutBtn.onclick = async () => {
+  await apiGet('logout.php');
+  currentUser = null;
+  showSection(null);
+};
+
+// Player dashboard
+function updatePlayerDashboard() {
+  playerNameSpan.textContent = currentUser.username;
+  playerLevelSpan.textContent = currentUser.level;
+  playerCoinsSpan.textContent = currentUser.coins;
+  document.getElementById('solved-count').textContent = currentSolvedTasks.length;
+  taskArea.classList.add('hidden');
+  taskSolutionInput.value = '';
+}
+
+// Get task
+btnGetTask.onclick = async () => {
+  taskStartTime = Date.now(); // Засекаем время начала
+  attemptCount = 0;
+  const diff = playerTaskDifficulty.value;
+  const tasks = await apiGet(`tasks.php?difficulty=${diff}`);
+  
+  if (tasks.error) {
+    showMessage(tasks.error, true);
+    return;
+  }
+  
+  if (tasks.length === 0) {
+    showMessage('Нет доступных задач для этого уровня', true);
+    return;
+  }
+
+  // Фильтруем задачи, которые уже решены (на случай кеширования)
+  const unsolvedTasks = tasks.filter(t => 
+    !currentSolvedTasks.some(st => st.task_id === t.id)
+  );
+
+  if (unsolvedTasks.length === 0) {
+    showMessage('Все задачи этого уровня уже решены!', true);
+    return;
+  }
+
+  currentTask = unsolvedTasks[Math.floor(Math.random() * unsolvedTasks.length)];
+  taskDesc.textContent = currentTask.description;
+  taskArea.classList.remove('hidden');
+};
+
+// Cancel task
+btnCancelTask.onclick = () => {
+  taskArea.classList.add('hidden');
+  currentTask = null;
+  taskSolutionInput.value = '';
+  showMessage('Задача отменена.');
+};
+
+// Submit solution
+btnSubmitSolution.onclick = async () => {
+  if (!currentTask) return;
+
+  const solution = taskSolutionInput.value.trim();
+  if (!solution) {
+    showMessage('Введите решение', true);
+    return;
+  }
+
+  attemptCount++; // Увеличиваем счетчик попыток
+  const solutionTime = Math.floor((Date.now() - taskStartTime) / 1000); // Время в секундах
+
+  const res = await apiPost('solve_task.php', {
+    task_id: currentTask.id,
+    solution: taskSolutionInput.value,
+    category: currentTask.category, // Предполагаем, что задача содержит категорию
+    attempts: attemptCount,
+    solution_time: solutionTime
+  });
+
+  if (res.error) {
+    showMessage(res.error, true);
+    // Если задача уже решена, обновляем список
+    if (res.error.includes('already solved')) {
+      await updateSolvedTasks();
+    }
+    return;
+  }
+
+  // Обновляем данные пользователя и список решенных задач
+  currentUser.coins = res.coins;
+  currentUser.xp = res.xp;
+  currentUser.level = res.level;
+  await updateSolvedTasks();
+  updatePlayerDashboard();
+  
+  showMessage(`Задача решена! Получено: ${res.reward.coins} монет, ${res.reward.xp} опыта`);
+  taskArea.classList.add('hidden');
+};
+
+// Новая функция для загрузки решенных задач
+async function updateSolvedTasks() {
+  const res = await apiGet('solved_tasks.php');
+  if (!res.error) {
+    currentSolvedTasks = res.solved_tasks;
+  }
+}
+
+function showSolvedTasks() {
+  const modal = document.getElementById('solved-tasks-modal');
+  modal.classList.remove('hidden');
+  
+  const list = document.getElementById('solved-tasks-list');
+  list.innerHTML = currentSolvedTasks.map((t, i) => `
+    <div class="solved-task" style="margin: 10px 0; padding: 10px; background: #22273c;">
+      <p>${i+1}. ${t.description?.substring(0, 50)}...</p>
+      <small>Решено: ${new Date(t.solved_at).toLocaleDateString()}</small>
+    </div>
+  `).join('');
+}
+
+function closeModal() {
+  const modal = document.getElementById('solved-tasks-modal');
+  modal.classList.add('hidden');
+}
+
+// Закрытие по клику вне модалки
+window.onclick = function(event) {
+  const modal = document.getElementById('solved-tasks-modal');
+  if (event.target === modal) {
+    closeModal();
+  }
+}
+
+async function showAllAchievements() {
+  try {
+    const [allRes, userRes] = await Promise.all([
+      apiGet('achievements.php'),
+      apiGet('achievements.php?action=user')
+    ]);
+
+    if (allRes.error || userRes.error) {
+      showMessage(`Ошибка загрузки: ${allRes.error || userRes.error}`, true);
+      return;
+    }
+
+    allAchievements = allRes;
+    userAchievements = userRes;
+    renderAchievementsList();
+    document.getElementById('achievements-modal').classList.remove('hidden');
+    
+  } catch (e) {
+    showMessage('Неизвестная ошибка при загрузке', true);
+    console.error('Achievements error:', e);
+  }
+}
+
+function renderAchievementsList() {
+  const container = document.getElementById('all-achievements-list');
+  container.innerHTML = '';
+
+  allAchievements.forEach(ach => {
+    const isUnlocked = userAchievements.some(uAch => uAch.id === ach.id);
+    const progress = calculateAchievementProgress(ach);
+
+    const item = document.createElement('div');
+    item.className = `achievement-item ${isUnlocked ? 'unlocked' : ''}`;
+    item.innerHTML = `
+      <div class="achievement-header">
+        <h4>${ach.name} ${isUnlocked ? '✓' : ''}</h4>
+        ${ach.reward_coins ? `<span class="coins">+${ach.reward_coins} монет</span>` : ''}
+      </div>
+      <p>${ach.description}</p>
+      ${!isUnlocked && progress ? 
+        `<div class="achievement-progress">Прогресс: ${progress}</div>` : ''}
+    `;
+    
+    container.appendChild(item);
+  });
+}
+
+function calculateAchievementProgress(achievement) {
+  // Получаем необходимые данные из решенных задач
+  const solvedTasks = currentSolvedTasks || [];
+  
+  // Для каждого типа достижения своя логика расчета
+  switch(achievement.name) {
+    case 'Ночная сова': {
+      const nightSolved = solvedTasks.filter(t => {
+        if(!t.solved_at) return false;
+        const hours = new Date(t.solved_at).getHours();
+        return hours >= 0 && hours < 5;
+      }).length;
+      return nightSolved > 0 ? 'Получено!' : `${nightSolved}/1`;
+    }
+
+    case 'Эрудит': {
+      const categories = [...new Set(solvedTasks
+        .filter(t => t.category)
+        .map(t => t.category))];
+      return `${categories.length}/${achievement.required_count}`;
+    }
+
+    case 'Скорострел': {
+      const fastSolutions = solvedTasks.filter(t => 
+        t.solution_time && t.solution_time < 300
+      ).length;
+      return `${fastSolutions}/${achievement.required_count}`;
+    }
+
+    case 'Мастер сложных задач': {
+      const hardSolved = solvedTasks.filter(t => 
+        t.difficulty === 'hard'
+      ).length;
+      return `${hardSolved}/${achievement.required_count}`;
+    }
+
+    case 'Легенда кода':
+    case 'Стратег':
+    case 'Новичок': {
+      const totalSolved = solvedTasks.length;
+      return `${totalSolved}/${achievement.required_count}`;
+    }
+
+    case 'Перфекционист': {
+      const firstTrySolved = solvedTasks.filter(t => 
+        t.attempts && t.attempts === 1
+      ).length;
+      return `${firstTrySolved}/${achievement.required_count}`;
+    }
+
+    default: {
+      // Общий случай для достижений с нестандартной логикой
+      if(achievement.required_count) {
+        return `0/${achievement.required_count}`;
+      }
+      return 'Недоступно';
+    }
+  }
+}
+
+function closeAchievementsModal() {
+  document.getElementById('achievements-modal').classList.add('hidden');
+}
+
+// Закрытие по клику вне модалки
+window.addEventListener('click', (e) => {
+  const modal = document.getElementById('achievements-modal');
+  if (e.target === modal) {
+    closeAchievementsModal();
+  }
+});
+
+// Admin Management
+async function loadAdminData() {
+  adminNameSpan.textContent = currentUser.username;
+  await loadAdminUsers();
+  await loadAdminTasks();
+}
+
+async function loadAdminUsers() {
+  const res = await apiGet('admin/users.php?action=list');
+  if (res.error) {
+    showMessage(res.error, true);
+    return;
+  }
+  adminUsersList.innerHTML = '';
+  res.forEach(u => {
+    const div = document.createElement('div');
+    div.textContent = `${u.username} [${u.role}] ${u.blocked?'[Заблокирован]':''} - Монеты: ${u.coins} Уровень: ${u.level}`;
+    const btnBlock = document.createElement('button');
+    btnBlock.textContent = u.blocked ? 'Разблокировать' : 'Заблокировать';
+    btnBlock.onclick = () => toggleBlockUser(u.id, u.blocked);
+    const btnDelete = document.createElement('button');
+    btnDelete.textContent = 'Удалить';
+    btnDelete.onclick = () => deleteUser(u.id);
+    div.appendChild(btnBlock);
+    div.appendChild(btnDelete);
+    adminUsersList.appendChild(div);
+  });
+}
+
+async function toggleBlockUser(userId, currentlyBlocked) {
+  let action = currentlyBlocked ? 'unblock' : 'block';
+  const res = await apiPost(`admin/users.php?action=${action}`, {id: userId});
+  if (res.error) {
+    showMessage(res.error, true);
+    return;
+  }
+  showMessage(res.success || 'Успешно');
+  loadAdminUsers();
+}
+
+async function deleteUser(userId) {
+  if (!confirm('Вы действительно хотите удалить пользователя?')) return;
+  const res = await apiPost('admin/users.php?action=delete', {id: userId});
+  if (res.error) {
+    showMessage(res.error, true);
+    return;
+  }
+  showMessage(res.success || 'Удалено');
+  loadAdminUsers();
+}
+
+async function loadAdminTasks() {
+  const res = await apiGet('admin/tasks.php?action=list');
+  if (res.error) {
+    showMessage(res.error, true);
+    return;
+  }
+  adminTasksList.innerHTML = '';
+  res.forEach(t => {
+    const div = document.createElement('div');
+    div.textContent = `[${t.difficulty}] ${t.description.substring(0, 50)}`;
+    const btnEdit = document.createElement('button');
+    btnEdit.textContent = 'Редактировать';
+    btnEdit.onclick = () => showTaskForm(t);
+    const btnDelete = document.createElement('button');
+    btnDelete.textContent = 'Удалить';
+    btnDelete.onclick = () => deleteTask(t.id);
+    div.appendChild(btnEdit);
+    div.appendChild(btnDelete);
+    adminTasksList.appendChild(div);
+  });
+}
+
+function showTaskForm(task=null) {
+  adminTaskForm.classList.remove('hidden');
+  if (!task) {
+    taskIdInput.value = '';
+    taskDescInput.value = '';
+    taskSolInput.value = '';
+    taskDifficultyInput.value = 'easy';
+  } else {
+    taskIdInput.value = task.id;
+    taskDescInput.value = task.description;
+    taskSolInput.value = task.solution;
+    taskDifficultyInput.value = task.difficulty;
+  }
+}
+
+btnAddTask.onclick = () => {
+  showTaskForm();
+};
+
+btnCancelTaskForm.onclick = () => {
+  adminTaskForm.classList.add('hidden');
+};
+
+btnSaveTask.onclick = async () => {
+  const id = taskIdInput.value.trim();
+  const desc = taskDescInput.value.trim();
+  const sol = taskSolInput.value.trim();
+  const diff = taskDifficultyInput.value;
+
+  if (!desc || !sol) {
+    showMessage('Заполните все поля задачи', true);
+    return;
+  }
+
+  const payload = {description: desc, solution: sol, difficulty: diff};
+  let url = 'admin/tasks.php?action=add';
+
+  if (id) {
+    payload.id = id;
+    url = 'admin/tasks.php?action=edit';
+  }
+  const res = await apiPost(url, payload);
+  if (res.error) {
+    showMessage(res.error, true);
+    return;
+  }
+  showMessage(res.success || 'Успешно');
+  adminTaskForm.classList.add('hidden');
+  loadAdminTasks();
+};
+
+async function checkForAchievements() {
+    const res = await apiGet('achievements.php?action=user');
+    if (!res.error) {
+        const newAchievements = res.filter(a => !currentAchievements.has(a.id));
+        newAchievements.forEach(a => {
+            showMessage(`Новое достижение: ${a.name}! ${a.description}`);
+        });
+        currentAchievements = new Set(res.map(a => a.id));
+    }
+}
+
+async function deleteTask(id) {
+  if (!confirm('Удалить задачу?')) return;
+  const res = await apiPost('admin/tasks.php?action=delete', {id});
+  if (res.error) {
+    showMessage(res.error, true);
+    return;
+  }
+  showMessage(res.success || 'Удалено');
+  loadAdminTasks();
+}
+
+// On load, check if logged in by calling user_info.php
+(async () => {
+  const res = await apiGet('user_info.php');
+  if (res.error) {
+    showSection(null);
+  } else {
+    currentUser = res;
+    await updateSolvedTasks(); // Загружаем решенные задачи
+    if (res.role === 'admin') {
+      showSection('admin');
+      await loadAdminData();
+    } else {
+      showSection('player');
+      updatePlayerDashboard();
+    }
+  }
+})();
+
+</script>
+
+</body>
+</html>
