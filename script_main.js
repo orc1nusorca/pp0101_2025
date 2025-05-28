@@ -250,15 +250,23 @@ btnSubmitSolution.onclick = async () => {
   await updateSolvedTasks();
   updatePlayerDashboard();
   
-  showMessage(`Задача решена! Получено: ${res.reward.coins} монет, ${res.reward.xp} опыта`);
+  // Показываем сообщение о достижениях, если они были получены
+  if (res.achievements_unlocked && res.achievements_unlocked.length > 0) {
+    const achievementsText = res.achievements_unlocked.join(', ');
+    showMessage(`Задача решена! Получено достижение: ${achievementsText}`);
+  } else {
+    showMessage(`Задача решена! Получено: ${res.coins - currentUser.coins + res.coins} монет, ${res.xp - currentUser.xp + res.xp} опыта`);
+  }
+  
   taskArea.classList.add('hidden');
 };
 
 // Новая функция для загрузки решенных задач
 async function updateSolvedTasks() {
   const res = await apiGet('solved_tasks.php');
-  if (!res.error) {
+  if (!res.error && res.solved_tasks) {
     currentSolvedTasks = res.solved_tasks;
+    document.getElementById('solved-count').textContent = currentSolvedTasks.length;
   }
 }
 
@@ -282,6 +290,7 @@ async function showSolvedTasks() {
     }
     
     modal.classList.remove('hidden');
+    document.body.classList.add('modal-open');
   } catch (error) {
     console.error('Error showing solved tasks:', error);
     showMessage('Ошибка загрузки истории задач', true);
@@ -291,6 +300,7 @@ async function showSolvedTasks() {
 // Обновленный обработчик закрытия
 function closeSolvedTasksModal() {
   document.getElementById('solved-tasks-modal').classList.add('hidden');
+  document.body.classList.remove('modal-open');
 }
 
 // Обновленная инициализация
@@ -309,20 +319,6 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 
-
-function closeModal() {
-  const modal = document.getElementById('solved-tasks-modal');
-  modal.classList.add('hidden');
-}
-
-// Закрытие по клику вне модалки
-window.onclick = function(event) {
-  const modal = document.getElementById('solved-tasks-modal');
-  if (event.target === modal) {
-    closeModal();
-  }
-}
-
 async function showAllAchievements() {
   try {
     const [allRes, userRes] = await Promise.all([
@@ -339,6 +335,7 @@ async function showAllAchievements() {
     userAchievements = userRes;
     renderAchievementsList();
     document.getElementById('achievements-modal').classList.remove('hidden');
+    document.body.classList.add('modal-open');
     
   } catch (e) {
     showMessage('Неизвестная ошибка при загрузке', true);
@@ -432,13 +429,19 @@ function calculateAchievementProgress(achievement) {
 
 function closeAchievementsModal() {
   document.getElementById('achievements-modal').classList.add('hidden');
+  document.body.classList.remove('modal-open');
 }
 
 // Закрытие по клику вне модалки
 window.addEventListener('click', (e) => {
-  const modal = document.getElementById('achievements-modal');
-  if (e.target === modal) {
+  const achievementsModal = document.getElementById('achievements-modal');
+  if (e.target === achievementsModal) {
     closeAchievementsModal();
+  }
+  
+  const solvedTasksModal = document.getElementById('solved-tasks-modal');
+  if (e.target === solvedTasksModal) {
+    closeSolvedTasksModal();
   }
 });
 
@@ -565,17 +568,6 @@ btnSaveTask.onclick = async () => {
   adminTaskForm.classList.add('hidden');
   loadAdminTasks();
 };
-
-async function checkForAchievements() {
-    const res = await apiGet('achievements.php?action=user');
-    if (!res.error) {
-        const newAchievements = res.filter(a => !currentAchievements.has(a.id));
-        newAchievements.forEach(a => {
-            showMessage(`Новое достижение: ${a.name}! ${a.description}`);
-        });
-        currentAchievements = new Set(res.map(a => a.id));
-    }
-}
 
 async function deleteTask(id) {
   if (!confirm('Удалить задачу?')) return;
