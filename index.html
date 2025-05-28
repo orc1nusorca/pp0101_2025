@@ -378,6 +378,10 @@
       padding: 10px 15px;
     }
   }
+
+  #shop-modal {
+    margin-top: 110px;
+  }
 </style>
 </head>
 <body>
@@ -408,6 +412,26 @@
       <h2>Привет, <span id="player-name"></span></h2>
       <p>Уровень: <span id="player-level"></span> | Монеты: <span id="player-coins"></span></p>
       <!-- В секции player-dashboard -->
+       <!-- В секции player-dashboard -->
+      <button id="btn-show-shop">Магазин улучшений</button>
+
+      <div id="shop-modal" class="modal hidden">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3>Магазин улучшений</h3>
+            <span class="close" onclick="closeShopModal()">&times;</span>
+          </div>
+          <div class="modal-body">
+            <div id="player-balance">Ваши монеты: <span id="coins-count">0</span></div>
+            <h4>Доступные улучшения:</h4>
+            <div id="shop-items"></div>
+            
+            <h4>Активные улучшения:</h4>
+            <div id="active-upgrades"></div>
+          </div>
+        </div>
+      </div>
+
       <button id="btn-show-achievements" onclick="showAllAchievements()">
         Все достижения
       </button>

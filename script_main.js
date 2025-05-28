@@ -597,3 +597,219 @@ async function deleteTask(id) {
     }
   }
 })();
+
+let activeUpgrades = {};
+let upgradeTimer = null;
+
+async function showShop() {
+  try {
+    // Остановить предыдущий таймер
+    if (upgradeTimer) clearInterval(upgradeTimer);
+    
+    const [shopRes, userRes] = await Promise.all([
+      apiGet('shop.php?action=list'),
+      apiGet('shop.php?action=active')
+    ]);
+    
+    if (shopRes.error || userRes.error) {
+      showMessage(shopRes.error || userRes.error, true);
+      return;
+    }
+    
+    document.getElementById('coins-count').textContent = currentUser.coins;
+    
+    // Обрабатываем активные улучшения
+    activeUpgrades = {};
+    const now = Date.now();
+    
+    userRes.forEach(upgrade => {
+      // Рассчитываем время истечения
+      const expires_at = upgrade.duration > 0 
+        ? (upgrade.purchased_at * 1000) + (upgrade.duration * 60000)
+        : null;
+      
+      // Добавляем только активные улучшения
+      if (!expires_at || expires_at > now) {
+        activeUpgrades[upgrade.user_id] = {
+          ...upgrade,
+          purchased_at: upgrade.purchased_at * 1000,
+          expires_at
+        };
+      }
+    });
+    
+    // Отображаем доступные улучшения
+    renderShopItems(shopRes);
+    
+    // Отображаем активные улучшения
+    renderActiveUpgrades();
+    
+    document.getElementById('shop-modal').classList.remove('hidden');
+    document.body.classList.add('modal-open');
+    
+    // Запускаем таймер для обновления времени
+    startUpgradeTimer();
+    
+  } catch (e) {
+    showMessage('Ошибка загрузки магазина', true);
+    console.error(e);
+  }
+}
+
+function renderShopItems(items) {
+  const shopContainer = document.getElementById('shop-items');
+  shopContainer.innerHTML = '';
+  
+  items.forEach(item => {
+    const itemEl = document.createElement('div');
+    itemEl.className = 'shop-item';
+    itemEl.innerHTML = `
+      <h4>${item.name} - ${item.price} монет</h4>
+      <p>${item.description}</p>
+      <button onclick="purchaseUpgrade(${item.id})">Купить</button>
+    `;
+    shopContainer.appendChild(itemEl);
+  });
+}
+
+function renderActiveUpgrades() {
+  const activeContainer = document.getElementById('active-upgrades');
+  activeContainer.innerHTML = '';
+  
+  const now = Date.now();
+  
+  // Фильтруем активные улучшения
+  const active = Object.values(activeUpgrades).filter(upgrade => {
+    return !upgrade.expires_at || upgrade.expires_at > now;
+  });
+  
+  if (active.length === 0) {
+    activeContainer.innerHTML = '<p>У вас нет активных улучшений</p>';
+    return;
+  }
+  
+  active.forEach(upgrade => {
+    const upgradeEl = document.createElement('div');
+    upgradeEl.className = 'active-upgrade';
+    
+    let timeInfo = '';
+    let cancelButton = '';
+    
+    if (upgrade.expires_at) {
+      const timeLeft = Math.max(0, Math.floor((upgrade.expires_at - now) / 60000));
+      timeInfo = `Осталось: ${timeLeft} мин`;
+      
+      // Показываем кнопку "Отменить" только если время еще не истекло
+      if (timeLeft > 0) {
+        cancelButton = `<button onclick="removeUpgrade(${upgrade.user_id})">Отменить</button>`;
+      }
+    } else {
+      // Для постоянных улучшений всегда показываем кнопку отмены
+      cancelButton = `<button onclick="removeUpgrade(${upgrade.user_id})">Отменить</button>`;
+    }
+    
+    upgradeEl.innerHTML = `
+      <h4>${upgrade.name}</h4>
+      <p>${upgrade.description}</p>
+      <small>Куплено: ${new Date(upgrade.purchased_at).toLocaleTimeString()}</small>
+      ${timeInfo ? `<small>${timeInfo}</small>` : ''}
+      ${cancelButton}
+    `;
+    activeContainer.appendChild(upgradeEl);
+  });
+}
+
+function startUpgradeTimer() {
+  // Обновляем каждую секунду для плавного изменения времени
+  upgradeTimer = setInterval(() => {
+    const now = Date.now();
+    let hasActive = false;
+    
+    // Проверяем, есть ли активные улучшения с таймером
+    for (const id in activeUpgrades) {
+      const upgrade = activeUpgrades[id];
+      
+      // Если время истекло, удаляем улучшение
+      if (upgrade.expires_at && upgrade.expires_at <= now) {
+        delete activeUpgrades[id];
+        showMessage(`Улучшение "${upgrade.name}" закончилось`);
+      } else {
+        hasActive = true;
+      }
+    }
+    
+    // Если есть активные улучшения, обновляем интерфейс
+    if (hasActive) {
+      renderActiveUpgrades();
+    } else {
+      // Если активных улучшений нет, очищаем контейнер
+      document.getElementById('active-upgrades').innerHTML = '<p>У вас нет активных улучшений</p>';
+    }
+    
+  }, 1000);
+}
+
+async function purchaseUpgrade(upgradeId) {
+  try {
+    const res = await apiPost('shop.php?action=purchase', {id: upgradeId});
+    if (res.error) {
+      showMessage(res.error, true);
+      return;
+    }
+    
+    // Обновляем баланс
+    currentUser.coins = res.new_balance;
+    document.getElementById('coins-count').textContent = res.new_balance;
+    document.getElementById('player-coins').textContent = res.new_balance;
+    
+    // Добавляем улучшение в активные
+    const upgrade = res.upgrade;
+    activeUpgrades[upgrade.user_id] = {
+      ...upgrade,
+      purchased_at: upgrade.purchased_at * 1000,
+      expires_at: upgrade.duration > 0 
+        ? (upgrade.purchased_at * 1000) + (upgrade.duration * 60000)
+        : null
+    };
+    
+    renderActiveUpgrades();
+    showMessage('Улучшение приобретено!');
+    
+  } catch (e) {
+    showMessage('Ошибка покупки', true);
+    console.error(e);
+  }
+}
+
+async function removeUpgrade(upgradeId) {
+  try {
+    const res = await apiPost('shop.php?action=remove', {id: upgradeId});
+    if (res.error) {
+      showMessage(res.error, true);
+      return;
+    }
+    
+    // Удаляем улучшение из активных
+    delete activeUpgrades[upgradeId];
+    renderActiveUpgrades();
+    showMessage('Улучшение отменено');
+    
+  } catch (e) {
+    showMessage('Ошибка отмены улучшения', true);
+    console.error(e);
+  }
+}
+
+function closeShopModal() {
+  document.getElementById('shop-modal').classList.add('hidden');
+  document.body.classList.remove('modal-open');
+  
+  // Останавливаем таймер при закрытии магазина
+  if (upgradeTimer) {
+    clearInterval(upgradeTimer);
+    upgradeTimer = null;
+  }
+}
+
+// Инициализация
+document.getElementById('btn-show-shop').addEventListener('click', showShop);
