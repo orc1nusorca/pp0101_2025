@@ -262,53 +262,18 @@ async function updateSolvedTasks() {
   }
 }
 
-// Обновленная функция
-async function showSolvedTasks() {
-  try {
-    await updateSolvedTasks();
-    
-    const modal = document.getElementById('solved-tasks-modal');
-    const list = document.getElementById('solved-tasks-list');
-    
-    if (currentSolvedTasks.length === 0) {
-      list.innerHTML = '<p>Вы еще не решили ни одной задачи</p>';
-    } else {
-      list.innerHTML = currentSolvedTasks.map((t, i) => `
-        <div class="solved-task">
-          <p>${i+1}. ${t.description?.substring(0, 50)}...</p>
-          <small>Решено: ${new Date(t.solved_at).toLocaleDateString()}</small>
-        </div>
-      `).join('');
-    }
-    
-    modal.classList.remove('hidden');
-  } catch (error) {
-    console.error('Error showing solved tasks:', error);
-    showMessage('Ошибка загрузки истории задач', true);
-  }
-}
-
-// Обновленный обработчик закрытия
-function closeSolvedTasksModal() {
-  document.getElementById('solved-tasks-modal').classList.add('hidden');
-}
-
-// Обновленная инициализация
-document.addEventListener('DOMContentLoaded', function() {
-  // Привязка кнопки показа истории
-  document.querySelector('#player-stats button').addEventListener('click', showSolvedTasks);
+function showSolvedTasks() {
+  const modal = document.getElementById('solved-tasks-modal');
+  modal.classList.remove('hidden');
   
-  // Привязка кнопки закрытия
-  document.querySelector('#solved-tasks-modal .close').addEventListener('click', closeSolvedTasksModal);
-  
-  // Клик вне модалки
-  document.getElementById('solved-tasks-modal').addEventListener('click', function(event) {
-    if (event.target === this) {
-      closeSolvedTasksModal();
-    }
-  });
-});
-
+  const list = document.getElementById('solved-tasks-list');
+  list.innerHTML = currentSolvedTasks.map((t, i) => `
+    <div class="solved-task" style="margin: 10px 0; padding: 10px; background: #22273c;">
+      <p>${i+1}. ${t.description?.substring(0, 50)}...</p>
+      <small>Решено: ${new Date(t.solved_at).toLocaleDateString()}</small>
+    </div>
+  `).join('');
+}
 
 function closeModal() {
   const modal = document.getElementById('solved-tasks-modal');
