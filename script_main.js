@@ -783,6 +783,13 @@ async function purchaseUpgrade(upgradeId) {
 
 async function removeUpgrade(upgradeId) {
   try {
+    // Получаем название улучшения для сообщения
+    const upgradeName = activeUpgrades[upgradeId]?.name || 'улучшение';
+    
+    // Подтверждение действия
+    const isConfirmed = confirm(`Вы уверены, что хотите отменить ${upgradeName}?`);
+    if (!isConfirmed) return;
+    
     const res = await apiPost('shop.php?action=remove', {id: upgradeId});
     if (res.error) {
       showMessage(res.error, true);

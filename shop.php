@@ -101,7 +101,7 @@ try {
             $stmt = $pdo->prepare("
                 SELECT 
                     u.*, 
-                    uu.id as user_upgrade_id,
+                    uu.id as user_id,
                     uu.purchased_at,
                     uu.duration
                 FROM user_upgrades uu
