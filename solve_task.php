@@ -59,7 +59,7 @@ try {
         FROM user_upgrades uu
         JOIN upgrades u ON uu.upgrade_id = u.id
         WHERE uu.user_id = ? 
-        AND (uu.expires_at IS NULL OR uu.expires_at > NOW())
+        AND (uu.duration = 0 OR (uu.duration > 0 AND uu.purchased_at + uu.duration > UNIX_TIMESTAMP()))
     ");
     $stmt->execute([$user_id]);
     $upgrades = $stmt->fetchAll(PDO::FETCH_ASSOC);

@@ -131,9 +131,8 @@
     top: 0;
     left: 0;
     width: 100%;
-    height: 100%;
-    display: flex;
     margin-top: 150px;
+    display: flex;
     justify-content: center;
     align-items: center;
     z-index: 1000;
@@ -141,7 +140,7 @@
   }
 
   .modal-content {
-    max-height: 90vh;
+    max-height: 70vh;
     height: auto;
     display: flex;
     flex-direction: column;
@@ -379,9 +378,207 @@
     }
   }
 
-  #shop-modal {
-    margin-top: 110px;
+  .theme-option {
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    margin: 5px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid transparent;
   }
+  
+  .theme-option.selected {
+    border-color: #6ad4ff;
+    box-shadow: 0 0 8px rgba(106, 212, 255, 0.8);
+  }
+  
+  .theme-option.default-theme {
+    background: linear-gradient(135deg, #0f111b 0%, #1a1e2e 100%);
+  }
+  
+  .theme-option.dark-theme {
+    background: linear-gradient(135deg, #121212 0%, #1e1e1e 100%);
+  }
+  
+  .theme-option.blue-theme {
+    background: linear-gradient(135deg, #0d1b2a 0%, #1b263b 100%);
+  }
+  
+  .theme-option.green-theme {
+    background: linear-gradient(135deg, #0a2e0a 0%, #1a3c1a 100%);
+  }
+  
+  .theme-option.purple-theme {
+    background: linear-gradient(135deg, #1a0a2e 0%, #2a1a3c 100%);
+  }
+  
+  .avatar-preview {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin: 10px auto;
+    display: block;
+    border: 2px solid #6ad4ff;
+    background: rgba(34, 39, 60, 0.8);
+  }
+  
+  .customization-section {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: rgba(34, 39, 60, 0.6);
+    border-radius: 8px;
+  }
+  
+  .customization-section h4 {
+    margin-top: 0;
+    color: #6ad4ff;
+    border-bottom: 1px solid rgba(106, 212, 255, 0.2);
+    padding-bottom: 5px;
+  }
+
+  .customization-section__block {
+    display: flex;
+    flex-direction: row;
+  }
+
+  /* Стили для тем */
+body.default-theme {
+    background: linear-gradient(135deg, #0f111b 0%, #1a1e2e 100%);
+}
+
+body.dark-theme {
+    background: linear-gradient(135deg, #121212 0%, #1e1e1e 100%);
+}
+
+body.blue-theme {
+    background: linear-gradient(135deg, #0d1b2a 0%, #1b263b 100%);
+}
+
+body.green-theme {
+    background: linear-gradient(135deg, #0a2e0a 0%, #1a3c1a 100%);
+}
+
+body.purple-theme {
+    background: linear-gradient(135deg, #1a0a2e 0%, #2a1a3c 100%);
+}
+
+/* Дополнительные стили для контраста */
+body.dark-theme .achievement-card,
+body.dark-theme #player-dashboard,
+body.dark-theme #admin-dashboard,
+body.dark-theme #app  {
+    background: rgba(20, 20, 20, 0.95);
+    border: 1px solid rgba(100, 100, 100, 0.3);
+}
+
+body.blue-theme .achievement-card,
+body.blue-theme #player-dashboard,
+body.blue-theme #admin-dashboard,
+body.blue-theme #app {
+    background: rgba(15, 30, 50, 0.95);
+    border: 1px solid rgba(70, 130, 180, 0.3);
+}
+
+body.green-theme .achievement-card,
+body.green-theme #player-dashboard,
+body.green-theme #admin-dashboard,
+body.green-theme #app {
+    background: rgba(15, 40, 15, 0.95);
+    border: 1px solid rgba(50, 205, 50, 0.3);
+}
+
+body.purple-theme .achievement-card,
+body.purple-theme #player-dashboard,
+body.purple-theme #admin-dashboard,
+body.purple-theme #app {
+    background: rgba(30, 10, 40, 0.95);
+    border: 1px solid rgba(147, 112, 219, 0.3);
+}
+/* Стили для прогресса уровня */
+#level-progress-container {
+  background-color: transparent;
+  border-radius: 10px;
+  padding: 15px;
+  margin: 20px 0;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  border: 1px solid rgba(106, 212, 255, 0.2);
+}
+
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.progress-bar {
+  height: 20px;
+  background-color: #e0e0e0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4CAF50, #8BC34A);
+  transition: width 0.5s ease;
+}
+
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+  font-size: 0.9em;
+  color: #666;
+}
+
+/* Стили для значка достижений */
+.achievements-badge {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  background: linear-gradient(135deg, #FFC107, #FF9800);
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  border: 2px solid white;
+}
+
+.badge-icon {
+  font-size: 16px;
+}
+
+.badge-count {
+  position: absolute;
+  font-size: 10px;
+  font-weight: bold;
+  color: white;
+  text-shadow: 0 1px 1px rgba(0,0,0,0.3);
+}
+
+/* Позиционирование контейнера аватара */
+.player-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+#player-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 3px solid #000000;
+  object-fit: cover;
+  position: relative;
+}
 </style>
 </head>
 <body>
@@ -408,9 +605,40 @@
     </div>
 
     <div id="player-dashboard" class="hidden">
-      <button id="player-logout">Выйти</button>
+      <div style="display: flex; justify-content: space-between; flex-direction: column;">
+        <button id="player-logout">Выйти</button>
+        <button id="btn-customize-profile">Настроить кабинет</button>
+      </div>
+      
+      <div style="text-align: center; margin: 20px 0;">
+        <div class="player-avatar-container">
+          <img id="player-avatar" class="avatar-preview" 
+              src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 24 24'><circle cx='12' cy='8' r='4' fill='%236ad4ff'/><path fill='%236ad4ff' d='M20 19v1a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6z'/></svg>" 
+              alt="Аватар">
+          <!-- ЗНАЧОК ДОСТИЖЕНИЙ -->
+          <div id="achievements-badge" class="achievements-badge hidden">
+            <span class="badge-icon">🏆</span>
+            <span class="badge-count">0</span>
+          </div>
+        </div>
+      </div>
       <h2>Привет, <span id="player-name"></span></h2>
       <p>Уровень: <span id="player-level"></span> | Монеты: <span id="player-coins"></span></p>
+      <div id="level-progress-container" class="dashboard-section">
+        <div class="progress-header">
+          <h3>Прогресс уровня</h3>
+          <span id="level-progress-percent">0%</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width: 0%"></div>
+        </div>
+        <div class="progress-info">
+          <span>Текущий уровень: <span id="current-level">1</span></span>
+          <span>До следующего: <span id="next-level-xp">0</span> XP</span>
+        </div>
+      </div>
+
+
       <!-- В секции player-dashboard -->
        <!-- В секции player-dashboard -->
       <button id="btn-show-shop">Магазин улучшений</button>
@@ -465,6 +693,50 @@
           </div>
         </div>
       </div>
+      
+      <div id="customization-modal" class="modal hidden">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Настройки личного кабинета</h3>
+            <span class="close">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="customization-section">
+              <h4>Аватар</h4>
+              <img id="avatar-preview" class="avatar-preview" src="" alt="Предпросмотр">
+              <input type="file" id="avatar-upload" accept="image/*">
+              <button id="btn-upload-avatar">Загрузить аватар</button>
+              <button id="btn-remove-avatar">Удалить аватар</button>
+            </div>
+            
+            <div class="customization-section">
+                <h4>Цветовая тема</h4>
+                <div>
+                    <div class="theme-option default-theme selected" data-theme="default"></div>
+                    <div class="theme-option dark-theme" data-theme="dark"></div>
+                    <div class="theme-option blue-theme" data-theme="blue"></div>
+                    <div class="theme-option green-theme" data-theme="green"></div>
+                    <div class="theme-option purple-theme" data-theme="purple"></div>
+                </div>
+            </div>
+            
+            <div class="customization-section">
+                <h4>Дополнительные настройки</h4>
+                <div class="customization-section__block">
+                  <label>
+                    <input type="checkbox" id="show-level-progress"> Показывать прогресс уровня
+                </label>
+                <br>
+                <label>
+                    <input type="checkbox" id="show-achievements-badge"> Показывать значок достижений
+                </label>
+                </div>
+            </div>
+            
+            <button id="btn-save-settings">Сохранить настройки</button>
+        </div>
+    </div>
+</div>
 
       <select id="player-task-difficulty">
         <option value="easy">Легкий</option>
@@ -516,5 +788,22 @@
   </div>
 
 <script src="script_main.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Применяем настройки при загрузке
+    const savedState = localStorage.getItem('appState');
+    if (savedState) {
+        const state = JSON.parse(savedState);
+        document.body.classList.add(state.theme + '-theme');
+        
+        const playerAvatar = document.getElementById('player-avatar');
+        if (state.avatar) {
+            playerAvatar.src = state.avatar;
+        } else {
+            playerAvatar.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" fill="%236ad4ff"/><path fill="%236ad4ff" d="M20 19v1a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6z"/></svg>';
+        }
+    }
+});
+</script>
 </body>
 </html>

@@ -108,27 +108,35 @@ function showSection(role) {
 
 // Login
 loginForm.onsubmit = async (e) => {
-  e.preventDefault();
-  const username = document.getElementById('login-username').value.trim();
-  const password = document.getElementById('login-password').value;
-  if (!username || !password) {
-    showMessage('Пожалуйста заполните все поля', true);
-    return;
-  }
-  const result = await apiPost('login.php', {username, password});
-  if (result.error) {
-    showMessage(result.error, true);
-    return;
-  }
-  currentUser = result.user;
-  if (currentUser.role === 'admin') {
-    showSection('admin');
-    loadAdminData();
-  } else {
-    showSection('player');
-    updatePlayerDashboard();
-  }
-  showMessage('Вход успешен');
+    e.preventDefault();
+    const username = document.getElementById('login-username').value.trim();
+    const password = document.getElementById('login-password').value;
+    
+    if (!username || !password) {
+        showMessage('Пожалуйста заполните все поля', true);
+        return;
+    }
+    
+    const result = await apiPost('login.php', {username, password});
+    if (result.error) {
+        showMessage(result.error, true);
+        return;
+    }
+    
+    currentUser = result.user;
+    
+    // Загружаем и применяем настройки ПЕРЕД показом интерфейса
+    await loadAndApplySettings();
+    
+    if (currentUser.role === 'admin') {
+        showSection('admin');
+        await loadAdminData();
+    } else {
+        showSection('player');
+        updatePlayerDashboard();
+    }
+    
+    showMessage('Вход успешен');
 };
 
 // Register
@@ -171,6 +179,11 @@ function updatePlayerDashboard() {
   document.getElementById('solved-count').textContent = currentSolvedTasks.length;
   taskArea.classList.add('hidden');
   taskSolutionInput.value = '';
+  // Обновляем прогресс уровня
+    updateLevelProgress();
+    
+    // Обновляем значок достижений
+    updateAchievementsBadge();
 }
 
 // Get task
@@ -325,6 +338,12 @@ async function showAllAchievements() {
       apiGet('achievements.php'),
       apiGet('achievements.php?action=user')
     ]);
+
+    // Сохраняем достижения пользователя
+      userAchievements = userRes || [];
+      
+      // Обновляем значок
+      updateAchievementsBadge();
 
     if (allRes.error || userRes.error) {
       showMessage(`Ошибка загрузки: ${allRes.error || userRes.error}`, true);
@@ -820,3 +839,499 @@ function closeShopModal() {
 
 // Инициализация
 document.getElementById('btn-show-shop').addEventListener('click', showShop);
+
+// ===== ИСПРАВЛЕННЫЙ КОД ДЛЯ КАСТОМИЗАЦИИ =====
+
+// Константы
+const UPLOADS_BASE = `${window.location.origin}/uploads`;
+
+// SVG по умолчанию
+const defaultAvatarSVG = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" fill="%236ad4ff"/><path fill="%236ad4ff" d="M20 19v1a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6z"/></svg>';
+
+// Настройки пользователя
+let userSettings = {
+    theme: 'default',
+    avatar: null,
+    showLevelProgress: true,
+    showAchievementsBadge: true
+};
+
+// Глобальные ссылки на элементы
+let customizationModal = null;
+let avatarPreview = null;
+let playerAvatar = null;
+
+// Инициализация обработчиков событий
+function initCustomization() {
+    // Находим основные элементы
+    customizationModal = document.getElementById('customization-modal');
+    avatarPreview = document.getElementById('avatar-preview');
+    playerAvatar = document.getElementById('player-avatar');
+    
+    // Находим кнопки
+    const btnCustomizeProfile = document.getElementById('btn-customize-profile');
+    const closeCustomizationBtn = customizationModal.querySelector('.close');
+    const themeOptions = document.querySelectorAll('.theme-option');
+    const btnUploadAvatar = document.getElementById('btn-upload-avatar');
+    const btnRemoveAvatar = document.getElementById('btn-remove-avatar');
+    const btnSaveSettings = document.getElementById('btn-save-settings');
+
+    // Устанавливаем обработчики
+    if (btnCustomizeProfile) {
+        btnCustomizeProfile.addEventListener('click', openCustomizationModal);
+    }
+
+    if (closeCustomizationBtn) {
+        closeCustomizationBtn.addEventListener('click', closeCustomizationModal);
+    }
+    
+    if (themeOptions.length > 0) {
+        themeOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                selectTheme(option.dataset.theme);
+            });
+        });
+    }
+    
+    if (btnUploadAvatar) {
+        btnUploadAvatar.addEventListener('click', handleAvatarUpload);
+    }
+    
+    if (btnRemoveAvatar) {
+        btnRemoveAvatar.addEventListener('click', removeAvatar);
+    }
+    
+    if (btnSaveSettings) {
+        btnSaveSettings.addEventListener('click', saveCustomizationSettings);
+    }
+}
+
+// Открытие модального окна настроек
+async function openCustomizationModal() {
+    if (!customizationModal) {
+        customizationModal = document.getElementById('customization-modal');
+    }
+    
+    // Загружаем актуальные настройки с сервера
+    try {
+        await loadUserSettings();
+        updateThemeSelection();
+        updateAvatarPreview();
+        
+        if (customizationModal) {
+            customizationModal.classList.remove('hidden');
+            document.body.classList.add('modal-open');
+        }
+    } catch (error) {
+        console.error('Error opening customization modal:', error);
+        showMessage('Ошибка загрузки настроек', true);
+    }
+}
+
+// Закрытие модального окна
+function closeCustomizationModal() {
+    if (customizationModal) {
+        customizationModal.classList.add('hidden');
+        document.body.classList.remove('modal-open');
+    }
+}
+
+// Клик вне модалки
+document.addEventListener('click', (e) => {
+    if (customizationModal && e.target === customizationModal) {
+        closeCustomizationModal();
+    }
+});
+
+// Выбор темы
+function selectTheme(theme) {
+    userSettings.theme = theme;
+    updateThemeSelection();
+    applyTheme(theme);
+}
+
+// Обновление выбора темы в UI
+function updateThemeSelection() {
+    const themeOptions = document.querySelectorAll('.theme-option');
+    if (themeOptions.length > 0) {
+        themeOptions.forEach(option => {
+            option.classList.remove('selected');
+            if (option.dataset.theme === userSettings.theme) {
+                option.classList.add('selected');
+            }
+        });
+    }
+}
+
+// Применение темы к интерфейсу
+function applyTheme(theme) {
+    // Удаляем все классы тем
+    document.body.classList.remove(
+        'default-theme', 
+        'dark-theme', 
+        'blue-theme', 
+        'green-theme', 
+        'purple-theme'
+    );
+    
+    // Добавляем выбранную тему
+    if (theme) {
+        document.body.classList.add(theme + '-theme');
+    }
+}
+
+// Загрузка аватара
+async function handleAvatarUpload() {
+    const avatarUpload = document.getElementById('avatar-upload');
+    if (!avatarUpload) return;
+    
+    const file = avatarUpload.files[0];
+    if (!file) {
+        showMessage('Выберите файл изображения', true);
+        return;
+    }
+    
+    // Показываем предпросмотр
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        if (avatarPreview) {
+            avatarPreview.src = e.target.result;
+        }
+        if (playerAvatar) {
+            playerAvatar.src = e.target.result;
+        }
+    };
+    reader.readAsDataURL(file);
+    
+    // Отправка на сервер
+    const formData = new FormData();
+    formData.append('avatar', file);
+    
+    try {
+        const response = await fetch(`${API_BASE}/upload_avatar.php`, {
+            method: 'POST',
+            body: formData,
+            credentials: 'include'
+        });
+        
+        const data = await response.json();
+        
+        if (data.error) {
+            showMessage(data.error, true);
+            return;
+        }
+        
+        // Сохраняем полный URL аватара
+        userSettings.avatar = data.avatar_url;
+        showMessage('Аватар успешно загружен!');
+        
+        // Обновляем аватар в UI
+        if (playerAvatar) {
+            playerAvatar.src = data.avatar_url;
+        }
+        
+    } catch (error) {
+        showMessage('Ошибка загрузки аватара', true);
+        console.error('Avatar upload error:', error);
+    }
+}
+
+// Обновление превью аватара
+function updateAvatarPreview() {
+    if (avatarPreview && userSettings.avatar) {
+        avatarPreview.src = userSettings.avatar;
+    } else if (avatarPreview) {
+        avatarPreview.src = defaultAvatarSVG;
+    }
+}
+
+// Удаление аватара
+async function removeAvatar() {
+    try {
+        const response = await apiPost('remove_avatar.php', {});
+        
+        if (response.error) {
+            showMessage(response.error, true);
+            return;
+        }
+        
+        userSettings.avatar = null;
+        updateAvatarPreview();
+        
+        if (playerAvatar) {
+            playerAvatar.src = defaultAvatarSVG;
+        }
+        
+        showMessage('Аватар удалён');
+        
+    } catch (error) {
+        showMessage('Ошибка удаления аватара', true);
+        console.error('Remove avatar error:', error);
+    }
+}
+
+// Сохранение настроек
+async function saveCustomizationSettings() {
+    const showLevelProgress = document.getElementById('show-level-progress');
+    const showAchievementsBadge = document.getElementById('show-achievements-badge');
+    
+    if (showLevelProgress && showAchievementsBadge) {
+        userSettings.showLevelProgress = showLevelProgress.checked;
+        userSettings.showAchievementsBadge = showAchievementsBadge.checked;
+    }
+    
+    try {
+        // Извлекаем только имя файла для сохранения в БД
+        const avatarFilename = userSettings.avatar 
+            ? userSettings.avatar.split('/').pop() 
+            : null;
+        
+        const response = await apiPost('user_settings.php', {
+            theme: userSettings.theme,
+            avatar: avatarFilename,
+            show_level_progress: userSettings.showLevelProgress,
+            show_achievements_badge: userSettings.showAchievementsBadge
+        });
+        
+        if (response.error) {
+            showMessage(response.error, true);
+            return;
+        }
+        
+        // Применяем настройки на странице
+        applyUserSettings();
+        
+        showMessage('Настройки сохранены!');
+        closeCustomizationModal();
+        
+        // Сохраняем состояние в localStorage
+        saveAppState();
+        
+    } catch (error) {
+        showMessage('Ошибка сохранения настроек', true);
+        console.error('Save settings error:', error);
+    }
+}
+
+// Загрузка настроек пользователя
+async function loadUserSettings() {
+    try {
+        const response = await apiGet('user_settings.php');
+        
+        if (response.error) {
+            return null;
+        }
+        
+        // Формируем полный URL аватара
+        const avatarUrl = response.avatar 
+            ? `${UPLOADS_BASE}/${response.avatar}` 
+            : null;
+        
+        return {
+            theme: response.theme || 'default',
+            avatar: avatarUrl,
+            showLevelProgress: response.show_level_progress !== undefined ? 
+                Boolean(response.show_level_progress) : true,
+            showAchievementsBadge: response.show_achievements_badge !== undefined ? 
+                Boolean(response.show_achievements_badge) : true
+        };
+        
+    } catch (error) {
+        console.error('Error loading settings:', error);
+        return null;
+    }
+}
+
+// Применение настроек
+function applyUserSettings() {
+    // 1. Применяем тему
+    applyTheme(userSettings.theme);
+    
+    // 2. Устанавливаем аватар
+    if (playerAvatar) {
+        if (userSettings.avatar) {
+            playerAvatar.src = userSettings.avatar;
+            
+            // Обработка ошибок загрузки изображения
+            playerAvatar.onerror = () => {
+                playerAvatar.src = defaultAvatarSVG;
+            };
+        } else {
+            playerAvatar.src = defaultAvatarSVG;
+        }
+    }
+    
+    // 3. Устанавливаем чекбоксы
+    const showLevelProgress = document.getElementById('show-level-progress');
+    const showAchievementsBadge = document.getElementById('show-achievements-badge');
+    
+    if (showLevelProgress) {
+        showLevelProgress.checked = userSettings.showLevelProgress;
+    }
+    
+    if (showAchievementsBadge) {
+        showAchievementsBadge.checked = userSettings.showAchievementsBadge;
+    }
+    const levelProgressContainer = document.getElementById('level-progress-container');
+    if (levelProgressContainer) {
+      levelProgressContainer.style.display = 
+        userSettings.showLevelProgress ? 'block' : 'none';
+    }
+    
+    // Применяем настройку для значка достижений
+    const achievementsBadge = document.getElementById('achievements-badge');
+    if (achievementsBadge) {
+      achievementsBadge.style.display = 
+        userSettings.showAchievementsBadge ? 'flex' : 'none';
+    }
+  }
+
+// Сохранение состояния приложения в localStorage
+function saveAppState() {
+    const state = {
+        theme: userSettings.theme,
+        avatar: userSettings.avatar,
+        showLevelProgress: userSettings.showLevelProgress,
+        showAchievementsBadge: userSettings.showAchievementsBadge
+    };
+    
+    localStorage.setItem('appState', JSON.stringify(state));
+}
+
+// Загрузка состояния приложения из localStorage
+function loadAppState() {
+    const state = localStorage.getItem('appState');
+    if (state) {
+        return JSON.parse(state);
+    }
+    return null;
+}
+
+// Инициализация при загрузке страницы
+document.addEventListener('DOMContentLoaded', async () => {
+    // Инициализация обработчиков кастомизации
+    initCustomization();
+    
+    // Проверяем авторизацию
+    const res = await apiGet('user_info.php');
+    if (!res.error) {
+        currentUser = res;
+        
+        // Загружаем и применяем настройки
+        await loadAndApplySettings();
+        
+        if (res.role === 'admin') {
+            showSection('admin');
+            await loadAdminData();
+        } else {
+            showSection('player');
+            updatePlayerDashboard();
+        }
+        
+        // Загружаем решенные задачи
+        await updateSolvedTasks();
+    } else {
+        // Для гостей применяем тему по умолчанию
+        applyTheme('default');
+    }
+    
+    // Загружаем состояние из localStorage ПОСЛЕ серверных настроек
+    const savedState = loadAppState();
+    if (savedState) {
+        // Объединяем с серверными настройками
+        userSettings = {...userSettings, ...savedState};
+        applyUserSettings();
+    }
+});
+
+// Сохранение состояния перед выходом
+window.addEventListener('beforeunload', () => {
+    saveAppState();
+});
+
+// Обновленный выход из системы
+async function logout() {
+    try {
+        // Сохраняем настройки перед выходом
+        saveAppState();
+        
+        await apiGet('logout.php');
+        
+        // Сбрасываем состояние
+        currentUser = null;
+        showSection(null);
+        
+        // Восстанавливаем тему по умолчанию
+        applyTheme('default');
+        
+        // Сбрасываем аватар
+        if (playerAvatar) {
+            playerAvatar.src = defaultAvatarSVG;
+        }
+        
+    } catch (error) {
+        console.error('Logout error:', error);
+    }
+}
+
+if (playerLogoutBtn) {
+    playerLogoutBtn.onclick = logout;
+}
+
+if (adminLogoutBtn) {
+    adminLogoutBtn.onclick = logout;
+}
+
+async function loadAndApplySettings() {
+    try {
+        const settings = await loadUserSettings();
+        if (settings) {
+            userSettings = settings;
+            applyUserSettings();
+            saveAppState(); // Сохраняем состояние после применения
+            return true;
+        }
+    } catch (error) {
+        console.error('Error loading settings:', error);
+    }
+    return false;
+}
+
+ function updateLevelProgress() {
+    const currentLevelEl = document.getElementById('current-level');
+    const nextLevelXpEl = document.getElementById('next-level-xp');
+    const progressFill = document.querySelector('.progress-fill');
+    const progressPercent = document.getElementById('level-progress-percent');
+    
+    if (!currentLevelEl || !progressFill) return;
+    
+    // Рассчитываем прогресс (примерная логика)
+    const currentLevel = parseInt(currentUser.level) || 1;
+    const currentXp = parseInt(currentUser.xp) || 0;
+    
+    // Формула: каждый уровень требует на 100 XP больше
+    const xpForNextLevel = currentLevel * 100;
+    const progress = Math.min(100, Math.floor((currentXp / xpForNextLevel) * 100));
+    
+    currentLevelEl.textContent = currentLevel;
+    nextLevelXpEl.textContent = xpForNextLevel;
+    progressFill.style.width = `${progress}%`;
+    progressPercent.textContent = `${progress}%`;
+  }
+
+  // Функция обновления значка достижений
+  function updateAchievementsBadge() {
+    const badgeCount = document.querySelector('.badge-count');
+    if (!badgeCount) return;
+    
+    // Показываем количество полученных достижений
+    const count = userAchievements.length || 0;
+    badgeCount.textContent = count;
+    
+    // Анимация при получении новых достижений
+    if (count > 0) {
+      const badge = document.getElementById('achievements-badge');
+      badge.classList.add('pulse');
+      setTimeout(() => badge.classList.remove('pulse'), 1000);
+    }
+  }
