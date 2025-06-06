@@ -132,12 +132,16 @@
     top: 0;
     left: 0;
     width: 100%;
-    margin-top: 150px;
+    margin-top: 50%;
     display: flex;
     justify-content: center;
     align-items: center;
     z-index: 1000;
     animation: fadeIn 0.3s ease;
+  }
+
+  #customization-modal {
+    margin-top: 10%;
   }
 
   .modal-content {
@@ -443,6 +447,15 @@
     display: flex;
     flex-direction: row;
   }
+  .customization-section__block label {
+    display: flex;
+    width: 100%;
+  }
+
+  .customization-section__block label input {
+    margin: 0;
+    max-width: 100px;
+  }
 
   /* Стили для тем */
 body.default-theme {
@@ -580,6 +593,185 @@ body.purple-theme #app {
   object-fit: cover;
   position: relative;
 }
+#daily-streak-container {
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border: 1px solid #f0f0f0;
+}
+
+.streak-header {
+  margin-bottom: 20px;
+}
+
+.streak-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.streak-title h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+}
+
+.streak-icon {
+  width: 24px;
+  height: 24px;
+  color: #FF9800;
+}
+
+.streak-progress {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+}
+
+.streak-count, .next-reward {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #666;
+}
+
+.streak-count strong, .next-reward strong {
+  color: #333;
+  font-weight: 600;
+}
+
+.fire-icon, .clock-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.fire-icon {
+  color: #FF5722;
+}
+
+.clock-icon {
+  color: #2196F3;
+}
+
+.streak-calendar {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  margin: 16px 0;
+}
+
+.streak-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 8px;
+  border-radius: 12px;
+  background: #f9f9f9;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.streak-day.claimed {
+  background: #E8F5E9;
+  border: 1px solid #C8E6C9;
+}
+
+.day-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.streak-day.claimed .day-name {
+  color: #2E7D32;
+}
+
+.day-reward {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+.streak-day.claimed .day-reward {
+  color: #2E7D32;
+}
+
+.streak-day.claimed::after {
+  content: "✓";
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 20px;
+  height: 20px;
+  background: #4CAF50;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  border: 2px solid white;
+}
+
+.streak-footer {
+  margin-top: 16px;
+}
+
+.streak-button {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: linear-gradient(135deg, #FF9800, #FF5722);
+  color: white;
+}
+
+.streak-button:disabled {
+  background: #E8F5E9;
+  color: #2E7D32;
+  cursor: default;
+}
+
+.streak-button.warning {
+  background: linear-gradient(135deg, #FFC107, #FF9800);
+}
+
+.button-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.reward-status {
+  text-align: center;
+  margin-top: 12px;
+  font-size: 14px;
+  color: #2E7D32;
+  min-height: 20px;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.reward-pulse {
+  animation: pulse 0.5s ease-in-out;
+}
 </style>
 </head>
 <body>
@@ -606,6 +798,43 @@ body.purple-theme #app {
     </div>
 
     <div id="player-dashboard" class="hidden">
+      <!-- В секции player-dashboard -->
+      <div id="daily-streak-container" class="dashboard-section">
+        <div class="streak-header">
+          <div class="streak-title">
+            <svg class="streak-icon" viewBox="0 0 24 24">
+              <path fill="currentColor" d="M12,2L4,12L12,22L20,12L12,2M12,4L18,12L12,20L6,12L12,4Z"/>
+            </svg>
+            <h3>Ежедневная награда</h3>
+          </div>
+          <div class="streak-progress">
+            <div class="streak-count">
+              <svg class="fire-icon" viewBox="0 0 24 24">
+                <path fill="currentColor" d="M13,14h-2v-2h2m0-4h-2v4h2m5-1v5H8v-5H6v7h12v-7m-4-8h-4V3H8v4H4v4h16V7z"/>
+              </svg>
+              <span>Серия: <strong id="current-streak">0</strong> дней</span>
+            </div>
+            <div class="next-reward">
+              <svg class="clock-icon" viewBox="0 0 24 24">
+                <path fill="currentColor" d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z"/>
+              </svg>
+              <span>Следующая награда: <strong id="next-reward-time">23:59</strong></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="streak-calendar"></div>
+
+        <div class="streak-footer">
+          <button id="claim-reward-btn" class="streak-button">
+            <span class="button-text">ПОЛУЧИТЬ НАГРАДУ</span>
+            <svg class="button-icon" viewBox="0 0 24 24">
+              <path fill="currentColor" d="M12,2L4,12L12,22L20,12L12,2M12,4L18,12L12,20L6,12L12,4Z"/>
+            </svg>
+          </button>
+          <div class="reward-status"></div>
+        </div>
+      </div>
       <div style="display: flex; justify-content: space-between; flex-direction: column;">
         <button id="player-logout">Выйти</button>
         <button id="btn-customize-profile">Настроить кабинет</button>
@@ -616,11 +845,6 @@ body.purple-theme #app {
           <img id="player-avatar" class="avatar-preview" 
               src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 24 24'><circle cx='12' cy='8' r='4' fill='%236ad4ff'/><path fill='%236ad4ff' d='M20 19v1a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6z'/></svg>" 
               alt="Аватар">
-          <!-- ЗНАЧОК ДОСТИЖЕНИЙ -->
-          <div id="achievements-badge" class="achievements-badge hidden">
-            <span class="badge-icon">🏆</span>
-            <span class="badge-count">0</span>
-          </div>
         </div>
       </div>
       <h2>Привет, <span id="player-name"></span></h2>
@@ -726,10 +950,6 @@ body.purple-theme #app {
                 <div class="customization-section__block">
                   <label>
                     <input type="checkbox" id="show-level-progress"> Показывать прогресс уровня
-                </label>
-                <br>
-                <label>
-                    <input type="checkbox" id="show-achievements-badge"> Показывать значок достижений
                 </label>
                 </div>
             </div>

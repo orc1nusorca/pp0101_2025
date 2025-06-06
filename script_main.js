@@ -171,6 +171,165 @@ adminLogoutBtn.onclick = async () => {
   showSection(null);
 };
 
+class DailyStreak {
+  constructor() {
+    this.currentStreak = 0;
+    this.lastClaimTime = null;
+    this.timerInterval = null;
+    this.claimedToday = false;
+    
+    this.init();
+  }
+  
+  async init() {
+    this.initCalendar();
+    await this.loadStreakData();
+    this.setupEventListeners();
+  }
+
+  async loadStreakData() {
+    try {
+      const data = await apiGet('get_streak_status.php');
+      
+      if (data.error) {
+        throw new Error(data.details || data.error);
+      }
+      
+      this.currentStreak = data.streak || 0;
+      this.lastClaimTime = data.lastClaim ? new Date(data.lastClaim) : null;
+      this.claimedToday = data.claimedToday || false;
+      
+      this.updateUI();
+      this.startTimer();
+      
+    } catch (error) {
+      console.error('Error loading streak data:', error);
+      this.showStatusMessage('Ошибка загрузки данных. Попробуйте позже', true);
+      
+      // Устанавливаем значения по умолчанию при ошибке
+      this.currentStreak = 0;
+      this.lastClaimTime = null;
+      this.claimedToday = false;
+      this.updateUI();
+    }
+  }
+
+  async claimReward() {
+    try {
+      const result = await apiPost('claim_reward.php', {});
+      
+      if (result.error) {
+        throw new Error(result.error);
+      }
+      
+      if (result.success) {
+        this.currentStreak = result.streak;
+        this.lastClaimTime = new Date();
+        this.claimedToday = true;
+        
+        this.updateUI();
+        this.showStatusMessage(`Получено ${result.reward} монет! Серия: ${result.streak} дней`);
+      } else {
+        this.showStatusMessage(result.message || 'Ошибка при получении награды', true);
+      }
+    } catch (error) {
+      console.error('Error claiming reward:', error);
+      this.showStatusMessage('Ошибка соединения', true);
+    }
+  }
+
+  initCalendar() {
+    const calendar = document.querySelector('.streak-calendar');
+    const days = ['1 день', '2 день', '3 день', '4 день', '5 день', '6 день', '7 день'];
+    
+    calendar.innerHTML = days.map((day, index) => `
+      <div class="streak-day" data-day="${index + 1}">
+        <div class="day-name">${day}</div>
+        <div class="day-reward">20</div>
+      </div>
+    `).join('');
+  }
+
+  updateUI() {
+    document.getElementById('current-streak').textContent = this.currentStreak;
+    this.updateCalendar();
+    
+    const btn = document.getElementById('claim-reward-btn');
+    if (this.isRewardAvailable()) {
+      btn.disabled = false;
+      btn.classList.remove('warning');
+      btn.querySelector('.button-text').textContent = 'ПОЛУЧИТЬ НАГРАДУ';
+    } else {
+      btn.disabled = true;
+      btn.classList.add('warning');
+      btn.querySelector('.button-text').textContent = 'УЖЕ ПОЛУЧЕНО СЕГОДНЯ';
+    }
+  }
+
+  updateCalendar() {
+    const days = document.querySelectorAll('.streak-day');
+    days.forEach((day, index) => {
+      day.classList.remove('claimed', 'reward-pulse');
+      
+      if (index  < this.currentStreak) {
+        day.classList.add('claimed');
+      }
+      
+      if (index + 1 === this.currentStreak && !this.isRewardAvailable()) {
+        day.classList.add('claimed', 'reward-pulse');
+      }
+    });
+  }
+
+  isRewardAvailable() {
+    if (!this.lastClaimTime) return true;
+    
+    const now = new Date();
+    const lastClaim = new Date(this.lastClaimTime);
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const lastClaimDate = new Date(lastClaim.getFullYear(), lastClaim.getMonth(), lastClaim.getDate());
+    
+    return today > lastClaimDate;
+  }
+
+  startTimer() {
+    if (this.timerInterval) clearInterval(this.timerInterval);
+    this.updateTimer();
+    this.timerInterval = setInterval(() => this.updateTimer(), 60000);
+  }
+
+  updateTimer() {
+    const now = new Date();
+    const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    const diff = tomorrow - now;
+    
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    
+    document.getElementById('next-reward-time').textContent = 
+      `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  }
+
+  showStatusMessage(message, isError = false) {
+    const statusElement = document.querySelector('.reward-status');
+    statusElement.textContent = message;
+    statusElement.style.color = isError ? '#F44336' : '#2E7D32';
+    
+    setTimeout(() => {
+      statusElement.textContent = '';
+    }, 5000);
+  }
+
+  setupEventListeners() {
+    document.getElementById('claim-reward-btn').addEventListener('click', () => this.claimReward());
+  }
+}
+
+// Инициализация при загрузке страницы
+document.addEventListener('DOMContentLoaded', () => {
+  new DailyStreak();
+});
+
 // Player dashboard
 function updatePlayerDashboard() {
   playerNameSpan.textContent = currentUser.username;
@@ -183,7 +342,7 @@ function updatePlayerDashboard() {
     updateLevelProgress();
     
     // Обновляем значок достижений
-    updateAchievementsBadge();
+    updateAchievementsBadge();;
 }
 
 // Get task
